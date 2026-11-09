@@ -31,6 +31,13 @@ export async function POST(request: Request) {
     return data?.user_id as string | undefined;
   }
 
+  // Newer Stripe API versions (2025-03-31+) moved current_period_end from the subscription onto its items.
+  function periodEnd(sub: Stripe.Subscription): string | null {
+    const raw = sub as unknown as { current_period_end?: number; items?: { data?: { current_period_end?: number }[] } };
+    const ts = raw.current_period_end ?? raw.items?.data?.[0]?.current_period_end;
+    return typeof ts === 'number' ? new Date(ts * 1000).toISOString() : null;
+  }
+
   async function syncSubscription(sub: Stripe.Subscription) {
     const customerId = typeof sub.customer === 'string' ? sub.customer : sub.customer.id;
     const userId = await userIdFor(customerId, sub.metadata?.userId);
@@ -42,7 +49,7 @@ export async function POST(request: Request) {
       stripe_subscription_id: sub.id,
       status: existing?.lifetime ? 'lifetime' : sub.status,
       price_id: sub.items.data[0]?.price.id ?? null,
-      current_period_end: new Date(sub.current_period_end * 1000).toISOString(),
+      current_period_end: periodEnd(sub),
       cancel_at_period_end: sub.cancel_at_period_end,
       updated_at: new Date().toISOString(),
     });
