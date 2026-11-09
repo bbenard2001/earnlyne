@@ -20,6 +20,7 @@ async function isPro(supabase: ReturnType<typeof createClient>, userId: string) 
   const { data } = await supabase.from('billing').select('*').eq('user_id', userId).maybeSingle();
   return entitlementFromBilling(data).tier === 'pro';
 }
+const why = (e: { message?: string; code?: string } | null) => (e ? ` (${e.code ? e.code + ': ' : ''}${e.message ?? 'unknown error'})` : '');
 const num = (v: FormDataEntryValue | null) => {
   const n = parseFloat(String(v ?? '').replace(/[^0-9.\-]/g, ''));
   return Number.isFinite(n) ? n : 0;
@@ -33,9 +34,9 @@ export async function savePlan(plan: CompPlan): Promise<ActionResult> {
   const err = validatePlan(plan);
   if (err) return { error: err };
   const { error: e1 } = await supabase.from('comp_plans').update({ is_active: false }).eq('user_id', user.id).eq('is_active', true);
-  if (e1) return { error: 'Couldn’t save the plan. Please try again.' };
+  if (e1) return { error: 'Couldn’t save the plan.' + why(e1) };
   const { error } = await supabase.from('comp_plans').insert({ ...planToRow(plan), user_id: user.id, is_active: true });
-  if (error) return { error: 'Couldn’t save the plan. Please try again.' };
+  if (error) return { error: 'Couldn’t save the plan.' + why(error) };
   revalidatePath('/app', 'layout');
   return { ok: true };
 }
@@ -91,11 +92,11 @@ export async function saveDeal(_: ActionResult, form: FormData): Promise<ActionR
     const { data: before } = await supabase.from('deals').select('*').eq('id', id).eq('user_id', user.id).maybeSingle();
     if (!before) return { error: 'That deal no longer exists.' };
     const { error } = await supabase.from('deals').update(row).eq('id', id).eq('user_id', user.id);
-    if (error) return { error: 'Couldn’t save the deal. Please try again.' };
+    if (error) return { error: 'Couldn’t save the deal.' + why(error) };
     await logChanges(supabase, user.id, before, row, id);
   } else {
     const { error } = await supabase.from('deals').insert({ ...row, user_id: user.id });
-    if (error) return { error: 'Couldn’t save the deal. Please try again.' };
+    if (error) return { error: 'Couldn’t save the deal.' + why(error) };
   }
   revalidatePath('/app', 'layout');
   redirect(`/app?q=${quarterOf(row.close_date)}`);
@@ -120,7 +121,7 @@ export async function updatePayout(id: string, patch: { paid?: number; collected
   if (patch.collected !== undefined) update.collected = patch.collected;
   if (!Object.keys(update).length) return { ok: true };
   const { error } = await supabase.from('deals').update(update).eq('id', id).eq('user_id', user.id);
-  if (error) return { error: 'Couldn’t save. Please try again.' };
+  if (error) return { error: 'Couldn’t save.' + why(error) };
   await logChanges(supabase, user.id, before, update, id);
   revalidatePath('/app', 'layout');
   return { ok: true };
@@ -135,7 +136,7 @@ export async function saveMoney(m: MoneySettings): Promise<ActionResult> {
     buckets: m.buckets.map((b) => ({ ...b, pct: Math.max(0, Math.min(100, b.pct)) })),
   };
   const { error } = await supabase.from('profiles').update({ money: clean }).eq('id', user.id);
-  if (error) return { error: 'Couldn’t save your settings.' };
+  if (error) return { error: 'Couldn’t save your settings.' + why(error) };
   revalidatePath('/app/take-home');
   return { ok: true };
 }
@@ -146,7 +147,7 @@ export async function updateName(_: ActionResult, form: FormData): Promise<Actio
   const name = String(form.get('name') || '').trim();
   if (!name) return { error: 'Enter your name.' };
   const { error } = await supabase.from('profiles').update({ full_name: name }).eq('id', user.id);
-  if (error) return { error: 'Couldn’t save your name.' };
+  if (error) return { error: 'Couldn’t save your name.' + why(error) };
   revalidatePath('/app', 'layout');
   return { ok: true };
 }

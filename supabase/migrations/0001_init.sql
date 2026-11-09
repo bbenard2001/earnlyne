@@ -124,3 +124,14 @@ create or replace function public.touch_updated_at()
 returns trigger language plpgsql as $$ begin new.updated_at = now(); return new; end $$;
 drop trigger if exists deals_touch on public.deals;
 create trigger deals_touch before update on public.deals for each row execute function public.touch_updated_at();
+
+-- ---------- table access for the API roles ----------
+-- Newer Supabase projects don't grant these automatically for tables made in the SQL editor.
+-- Row Level Security above still limits every user to their own rows.
+grant usage on schema public to anon, authenticated, service_role;
+grant select, insert, update, delete on public.profiles, public.comp_plans, public.deals to authenticated;
+grant select, insert on public.deal_edit_history to authenticated;
+grant select on public.billing to authenticated;
+grant usage, select on all sequences in schema public to authenticated;
+grant all on all tables in schema public to service_role;
+grant usage, select on all sequences in schema public to service_role;
