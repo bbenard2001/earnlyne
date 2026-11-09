@@ -56,7 +56,7 @@ You'll create four free accounts, paste some keys, and deploy. Do everything in 
 
 1. Sign up at supabase.com → **New project**. Pick a region near your users and save the database password somewhere safe.
 2. **SQL Editor → New query**: paste all of `supabase/migrations/0001_init.sql` and click **Run**. You should see "Success".
-3. **Project Settings → API**: copy the **Project URL**, the **anon public** key and the **service_role** key. Keep the service_role key secret.
+3. Click **Connect → App Frameworks → Next.js** to copy the **Project URL** (`https://xxxx.supabase.co`). Then **Project Settings → API Keys**: copy the **Publishable** key (`sb_publishable_…`, goes in `NEXT_PUBLIC_SUPABASE_ANON_KEY`) and the **Secret** key (`sb_secret_…`, goes in `SUPABASE_SERVICE_ROLE_KEY`). Older projects show these as **anon** and **service_role** (`eyJ…`); those work too. Keep the secret key secret.
 4. **Authentication → URL Configuration**:
    - Site URL: `http://localhost:3000` for now (you'll change it in step 7).
    - Redirect URLs: add `http://localhost:3000/auth/callback`.
