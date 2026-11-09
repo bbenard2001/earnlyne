@@ -29,5 +29,5 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   // Skip static files and the Stripe webhook (it must receive the raw, unmodified request).
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|api/stripe/webhook|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|api/stripe/webhook|api/health|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
 };
