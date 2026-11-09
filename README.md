@@ -161,4 +161,4 @@ npm run build      # production build (what Vercel runs)
 
 ## Not built yet
 
-From the build brief: CSV/CRM import and reconciliation, PPTX/XLSX report exports, kanban view, benchmarks, referrals, shareable quota card, KPI selection at onboarding, and mobile-specific layouts beyond the responsive design. The data model leaves room for each.
+From the build brief: CRM re-import reconciliation (simple CSV import exists at `/app/import`), PPTX/XLSX report exports, kanban view, benchmarks, referrals, shareable quota card, KPI selection at onboarding, and mobile-specific layouts beyond the responsive design. The data model leaves room for each.

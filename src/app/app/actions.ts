@@ -169,3 +169,30 @@ export async function deleteAccount(form: FormData) {
   await supabase.auth.signOut();
   redirect('/?deleted=1');
 }
+
+/* ---------- CSV import ---------- */
+export type ImportResult = { error?: string; imported?: number; skipped?: { line: number; reason: string }[] };
+
+export async function importDeals(csv: string): Promise<ImportResult> {
+  const { supabase, user } = await requireUser();
+  if (csv.length > 1_000_000) return { error: 'That file is too large. Keep it under 1 MB (about 5,000 deals).' };
+  const { rowsFromCsv } = await import('@/lib/csv');
+  const parsed = rowsFromCsv(csv);
+  if (parsed.missing.length) return { error: `The file needs these columns: ${parsed.missing.join(', ')}. Check the first row has headers like Company, Value, Stage, Close date.` };
+  const pro = await isPro(supabase, user.id);
+  const cur = currentQuarter();
+  const skipped = [...parsed.errors];
+  const ok = parsed.rows.filter(({ line, row }) => {
+    if (!pro && quarterOf(row.close_date) !== cur) {
+      skipped.push({ line, reason: `${row.company}: outside the current quarter (Free plan). Upgrade to Pro to import history.` });
+      return false;
+    }
+    return true;
+  });
+  if (!ok.length) return { imported: 0, skipped: skipped.sort((a, b) => a.line - b.line) };
+  if (ok.length > 5000) return { error: 'Import up to 5,000 deals at a time.' };
+  const { error } = await supabase.from('deals').insert(ok.map(({ row }) => ({ ...row, user_id: user.id })));
+  if (error) return { error: 'Couldn’t import the deals.' + why(error) };
+  revalidatePath('/app', 'layout');
+  return { imported: ok.length, skipped: skipped.sort((a, b) => a.line - b.line) };
+}

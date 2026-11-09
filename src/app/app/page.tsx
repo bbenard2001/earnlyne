@@ -78,6 +78,7 @@ export default async function Dashboard({ searchParams }: { searchParams: { q?: 
         </div>
         <div className="ctrls">
           <QuarterPicker value={quarter} options={quarterOptions(s.deals, quarter)} locked={!isPro} />
+          <Link className="btn ghost" href="/app/import">Import CSV</Link>
           <Link className="btn" href={`/app/deals/new?q=${quarter}`}>+ Add deal</Link>
         </div>
       </div>
